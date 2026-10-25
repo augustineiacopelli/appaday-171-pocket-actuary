@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<link rel="apple-touch-icon" href="https://augustineiacopelli.github.io/appaday/icons/171.png">
+<meta name="apple-mobile-web-app-title" content="Actuary">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<link rel="manifest" href="https://augustineiacopelli.github.io/appaday/manifests/171.webmanifest">
+<script src="https://augustineiacopelli.github.io/appaday/save.js" defer></script>
+<title>Pocket Actuary</title>
+<meta name="description" content="See your survival odds from the official SSA 2023 life table, compare partners, and find Social Security break even ages.">
+<style>
+:root{--bg:#0F0E0C;--panel:#1A1814;--panel2:#221F19;--line:#34302A;--text:#F0ECE2;--muted:#B0A998;--gold:#E0B040;--teal:#4FB3C4;--rose:#E58AA3;--err:#F2917B}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html{background:var(--bg)}
+body{margin:0;background:var(--bg);color:var(--text);font:16px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;min-height:100vh;padding-bottom:env(safe-area-inset-bottom)}
+.wrap{max-width:560px;margin:0 auto;padding:0 16px 40px}
+.bar{position:sticky;top:0;z-index:5;background:var(--bg);border-bottom:1px solid var(--line);padding:calc(8px + env(safe-area-inset-top)) 16px 8px}
+.bar-in{max-width:560px;margin:0 auto;display:flex;align-items:center;gap:10px;min-height:44px}
+.num{font-weight:800;font-size:.85rem;color:#14120F;background:var(--gold);border-radius:8px;padding:3px 8px;letter-spacing:.04em}
+.ttl{font-family:Georgia,"Times New Roman",serif;font-size:1.2rem;font-weight:700;flex:1}
+.home{color:var(--gold);text-decoration:none;font-size:.9rem;min-height:44px;display:flex;align-items:center;padding:0 4px}
+.notice{margin:14px 0 0;background:var(--panel2);border:1px solid var(--line);border-left:4px solid var(--gold);border-radius:12px;padding:12px 14px;font-size:.9rem;color:var(--muted)}
+.notice b{color:var(--text)}
+button{font:inherit;color:inherit;cursor:pointer}
+.btn{min-height:44px;padding:0 16px;border-radius:12px;border:1px solid var(--line);background:var(--panel);color:var(--text)}
+.btn.gold{background:var(--gold);color:#14120F;border-color:var(--gold);font-weight:700}
+.notice .btn{margin-top:10px}
+.tabs{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin:16px 0 14px}
+.tab{min-height:44px;border-radius:12px;border:1px solid var(--line);background:var(--panel);color:var(--muted);font-size:.85rem;font-weight:600;padding:0 2px}
+.tab[aria-selected="true"]{background:var(--gold);color:#14120F;border-color:var(--gold)}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:16px;margin-bottom:14px}
+h2{font-family:Georgia,"Times New Roman",serif;font-size:1.15rem;margin:0 0 10px}
+h3{font-size:.95rem;margin:16px 0 8px;color:var(--gold);letter-spacing:.02em}
+label{display:block;font-size:.85rem;color:var(--muted);margin-bottom:4px}
+select,input[type=number]{width:100%;min-height:44px;background:var(--bg);color:var(--text);border:1px solid var(--line);border-radius:10px;padding:0 10px;font:inherit}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.stack>div{margin-bottom:10px}
+.seg.two{grid-template-columns:1fr 1fr;margin-bottom:12px}
+.est-row{display:flex;justify-content:space-between;gap:10px;padding:8px 0;border-bottom:1px solid var(--line);font-size:.9rem}
+.est-big{font-family:Georgia,serif;font-size:2.2rem;font-weight:700;color:var(--gold);line-height:1.1}
+.src li{margin-bottom:8px}
+.src{padding-left:18px;margin:6px 0}
+.dob{display:grid;grid-template-columns:1.25fr .8fr 1fr;gap:8px}
+.dob select,.dob input{min-width:0}
+.big{font-family:Georgia,serif;font-size:1.9rem;font-weight:700;color:var(--gold);line-height:1.1}
+.kpis{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:4px 0 12px}
+.kpi{background:var(--panel2);border-radius:12px;padding:10px 12px}
+.kpi small{display:block;color:var(--muted);font-size:.78rem}
+.chart{width:100%;height:auto;display:block}
+.chart text{fill:var(--muted);font-size:10px;font-family:inherit}
+.legend{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:.8rem;color:var(--muted);margin-top:6px}
+.legend i{display:inline-block;width:14px;height:4px;border-radius:2px;vertical-align:middle;margin-right:5px}
+table{width:100%;border-collapse:collapse;font-size:.9rem}
+th{text-align:left;color:var(--muted);font-weight:600;font-size:.78rem;padding:6px 4px;border-bottom:1px solid var(--line)}
+td{padding:9px 4px;border-bottom:1px solid var(--line)}
+td.r,th.r{text-align:right}
+.hi{color:var(--gold);font-weight:700}
+.sm{font-size:.82rem;color:var(--muted)}
+.err{color:var(--err)}
+.seg{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.seg button{min-height:44px;border-radius:10px;border:1px solid var(--line);background:var(--bg);color:var(--muted);font-weight:600}
+.seg button[aria-pressed="true"]{background:var(--teal);border-color:var(--teal);color:#0B1A1D}
+input[type=range]{width:100%;height:44px;accent-color:var(--gold)}
+.hrbox{margin-top:14px;padding-top:12px;border-top:1px solid var(--line)}
+.out{margin-top:6px}
+details{margin-top:6px}
+summary{min-height:44px;display:flex;align-items:center;color:var(--gold);cursor:pointer}
+footer{border-top:1px solid var(--line);margin-top:10px;padding-top:14px;font-size:.8rem;color:var(--muted)}
+footer a{color:var(--gold)}
+.chip3{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin:8px 0}
+.chip{background:var(--panel2);border-radius:10px;padding:8px 6px;text-align:center;font-size:.8rem;color:var(--muted)}
+.chip b{display:block;color:var(--text);font-size:.95rem}
+[hidden]{display:none!important}
+</style>
+</head>
+<body>
+<div class="bar"><div class="bar-in"><span class="num">171</span><span class="ttl">Pocket Actuary</span><a class="home" href="https://augustineiacopelli.github.io/appaday/">Portfolio</a></div></div>
+<div class="wrap">
+<div class="notice" id="notice" hidden><b>Not medical or financial advice.</b> Pocket Actuary is an educational picture built on the Social Security Administration 2023 period life table. Your own health, family history, and choices matter more than any table.<br><button class="btn gold" id="ack" type="button">Got it</button></div>
+<div class="tabs" role="tablist" aria-label="Sections">
+<button class="tab" role="tab" data-tab="survival" id="t-survival" aria-controls="p-survival">Survival</button>
+<button class="tab" role="tab" data-tab="together" id="t-together" aria-controls="p-together">Together</button>
+<button class="tab" role="tab" data-tab="factors" id="t-factors" aria-controls="p-factors">Factors</button>
+<button class="tab" role="tab" data-tab="horizon" id="t-horizon" aria-controls="p-horizon">Horizon</button>
+</div>
+
+<section id="p-survival" role="tabpanel" aria-labelledby="t-survival">
+<div class="card"><h2>You</h2>
+<div class="stack"><div><label for="sex">Mortality table</label><select id="sex"><option value="m">Male</option><option value="f">Female</option></select></div>
+<div><label id="birth-l">Birthdate</label><div class="dob" role="group" aria-labelledby="birth-l"><select id="birth-m" aria-label="Birth month"><option value="1">Jan</option><option value="2">Feb</option><option value="3">Mar</option><option value="4">Apr</option><option value="5">May</option><option value="6">Jun</option><option value="7">Jul</option><option value="8">Aug</option><option value="9">Sep</option><option value="10">Oct</option><option value="11">Nov</option><option value="12">Dec</option></select><input id="birth-d" type="number" inputmode="numeric" min="1" max="31" placeholder="Day" aria-label="Birth day"><input id="birth-y" type="number" inputmode="numeric" min="1900" max="2100" placeholder="Year" aria-label="Birth year"></div><div class="err sm" id="birth-e" role="alert"></div></div></div>
+<div id="sv-out" class="out"></div>
+<button class="btn" id="copy-sum" type="button">Copy summary</button> <span id="copy-msg" class="sm" role="status"></span><div id="copy-box-wrap"></div></div>
+</section>
+
+<section id="p-together" role="tabpanel" aria-labelledby="t-together" hidden>
+<div class="card"><h2>A partner</h2>
+<div class="stack"><div><label>Partner mortality table</label><div id="psex-t" class="hi"></div><div class="sm">Set automatically to the opposite of yours.</div></div>
+<div><label id="pbirth-l">Birthdate</label><div class="dob" role="group" aria-labelledby="pbirth-l"><select id="pbirth-m" aria-label="Birth month"><option value="1">Jan</option><option value="2">Feb</option><option value="3">Mar</option><option value="4">Apr</option><option value="5">May</option><option value="6">Jun</option><option value="7">Jul</option><option value="8">Aug</option><option value="9">Sep</option><option value="10">Oct</option><option value="11">Nov</option><option value="12">Dec</option></select><input id="pbirth-d" type="number" inputmode="numeric" min="1" max="31" placeholder="Day" aria-label="Birth day"><input id="pbirth-y" type="number" inputmode="numeric" min="1900" max="2100" placeholder="Year" aria-label="Birth year"></div><div class="err sm" id="pbirth-e" role="alert"></div></div></div>
+<p class="sm">You are the person on the Survival tab. Both lives are treated as independent, which is a simplification.</p>
+<div id="tg-out" class="out"></div></div>
+</section>
+
+<section id="p-factors" role="tabpanel" aria-labelledby="t-factors" hidden>
+<div class="card" id="est-card"><h2>Estimate a hazard ratio</h2>
+<p class="sm">A hazard ratio multiplies your chance of dying in any given year compared with the average person in the SSA table. 1.00 is average, 1.50 means 50 percent higher each year, and 0.70 means 30 percent lower. Insurers use the same idea and call it a percent of standard mortality, with each table rating step adding 25 percent.</p>
+<div class="seg two" role="group" aria-label="Who the estimate is for"><button type="button" data-ef="you">You</button><button type="button" data-ef="p">Partner</button></div>
+<div id="est-form"></div>
+<div id="est-out" class="out"></div>
+<div class="hrbox"><h3>Your hazard ratio</h3>
+<p class="sm">This slider follows the estimate above automatically. You can also drag it, for example to match an insurance rating or to allow for a condition the estimator leaves out. A value of 1.00 reproduces the SSA table exactly. Illustrative only, not a health prediction.</p>
+<div id="hr-you"><label for="hr">You: <span id="hrv" class="hi"></span></label><input type="range" id="hr" min="0.3" max="3" step="0.01"></div>
+<div id="hr-p" hidden><label for="phr">Partner: <span id="phrv" class="hi"></span></label><input type="range" id="phr" min="0.3" max="3" step="0.01"></div></div>
+<details><summary>Where these numbers come from</summary>
+<ul class="src sm">
+<li>Smoking: Jha and colleagues, New England Journal of Medicine, 2013. Current smokers died at about 2.8 times the rate of never smokers for men and 3.0 times for women, ages 25 to 79. Quitting at 25 to 34 gained about 10 years, at 35 to 44 about 9, and at 45 to 54 about 6. The "quit at 45 or later" setting is my interpolation from those gains. About 11.0 percent of US adults smoked in 2023 (CDC).</li>
+<li>Weight: Global BMI Mortality Collaboration, Lancet, 2016, never smokers without chronic disease, compared with BMI 20 to 25. Hazard ratios: 1.51 under 18.5, 1.13 for 18.5 to 20, 1.07 for 25 to 27.5, 1.20 for 27.5 to 30, 1.45 for 30 to 35, 1.94 for 35 to 40, 2.76 for 40 and up. NHANES 2017 to 2018: 30.7 percent of adults are overweight, 42.4 percent have obesity, and 9.2 percent have severe obesity.</li>
+<li>Physical activity: Arem and colleagues, JAMA Internal Medicine, 2015, compared with no leisure time activity. Hazard ratios: 0.80 below the guideline, 0.69 for one to two times it, 0.63 for two to three times, 0.61 for three to five times. The guideline is 150 minutes a week of moderate activity. CDC reports 47.2 percent of adults met it in 2024.</li>
+<li>Diabetes: Emerging Risk Factors Collaboration, 2011, hazard ratio 1.80 for all cause death after adjusting for age, sex, smoking, and BMI. About 15 percent of US adults have diabetes, diagnosed or not (CDC, my calculation from 39.8 million adults).</li>
+<li>Family history: a UK Biobank analysis of about 186,000 people aged 55 to 73, reported in an American College of Cardiology release in 2016, found all cause mortality 16 percent lower for each extra decade a mother lived past 69 and 17 percent lower for a father. I use 0.835 per decade for each parent, centered on age 79, which is my assumption for a typical parental lifespan. Deaths before 69 count as 69 and deaths after 95 as 95, because the evidence covers later ages. A living parent counts only from age 80, at the age you enter. Two parents together count at 70 percent of their combined effect, my judgment, because they share habits and the same household. Twin studies put the inherited share of lifespan near 15 to 30 percent and a 2018 family tree study near 7 percent or less, so much of this signal overlaps with the lifestyle factors above. I read the release, not the paper itself.</li>
+<li>Marital status: a 2020 meta-analysis of 20 studies and about 7.8 million people (Global Health Research and Policy) found all cause mortality for unmarried compared with married people of 1.46 for men and 1.22 for women. By group, never married was 1.67 for men and 1.46 for women, divorced or separated 1.59 and 1.27, and widowed 1.30 and 1.14. Men carried more excess risk than women. I read a summary of the paper, not the paper itself. The studies are observational, and part of the gap is healthier people marrying and staying married, plus overlap with smoking, income, and activity. So I made three adjustments of my own. Each ratio is divided by the population average, using rough shares I assumed for US adults (50 percent married, 32 never married, 12 divorced or separated, 6 widowed). The result is shrunk to half strength in log terms. Nothing is counted under age 30. Cohabiting, marriage quality, and children were not studied.</li>
+<li>Grandparents: no study I could verify gives a hazard ratio for them. A grandparent shares half as many genes as a parent, so I apply half the parent effect in log terms, about 0.91 per decade, centered on an average age at death of 76 (my assumption, because earlier generations died younger) and limited to 65 through 95. It counts only when no parent line applies, since parents already carry most of the signal. Treat it as a small nudge, not a finding.</li>
+<li>Age: the weight effect is scaled down after age 60, reaching 45 percent of its strength by age 80, from the 1.52 versus 1.21 per 5 BMI units figures above. Starting the taper at 60 is my assumption. Smoking and the other factors are not tapered because I could not verify age specific ratios.</li>
+<li>Combining: Li and colleagues, Circulation, 2018, found five healthy habits together carried a hazard ratio of 0.26 against none, with 12 to 14 more years of life at age 50. Simply multiplying separate ratios overshoots that spread, so the estimator shrinks the combined effect to 65 percent in log terms. That 65 percent is my judgment, chosen so the extremes stay inside what Li found. It is not a published figure.</li>
+<li>Rescaling: the SSA table describes the average American, not a never smoker at a healthy weight. Each ratio is divided by the average ratio across the population, so a typical mix of answers lands near 1.00. The splits inside broad CDC groups (for example, half of adults below the activity guideline being fully inactive, and equal shares within each weight band) are my assumptions.</li>
+<li>Insurance: rating tables run A to J, each step adding 25 percent to standard mortality. Insurers' standard is their own table, not the SSA average, and each company sets its own rules.</li>
+</ul></details>
+<p class="sm">Left out on purpose: existing conditions such as heart disease or cancer, alcohol, diet, blood pressure, a parent's cause of death, family history of specific diseases, and friendships and other social ties. Either I could not verify a usable hazard ratio, or the effect overlaps too much with the factors above. Ratios describe groups, not individuals, and a prior diagnosis can outweigh everything here. Not medical advice.</p>
+</div>
+<div class="card"><h2>What your hazard ratio does</h2><div id="fx-out"></div></div>
+<div class="card"><h2>Mortality improvement</h2>
+<p class="sm">Death rates have fallen over time. This lowers each future year's death rate by the percent shown, compounding. Zero percent freezes 2023 rates.</p>
+<div class="seg" role="group" aria-label="Yearly improvement"><button type="button" data-r="0">0% a year</button><button type="button" data-r="1">1% a year</button><button type="button" data-r="2">2% a year</button></div></div>
+</section>
+
+<section id="p-horizon" role="tabpanel" aria-labelledby="t-horizon" hidden>
+<div class="card"><h2>Life in weeks</h2><div id="hz-out"></div></div>
+<div class="card"><h2>Social Security claiming</h2>
+<p class="sm">Full retirement age 67, which applies to anyone born in 1960 or later. Enter the monthly benefit you would get at 67.</p>
+<label for="ben">Monthly benefit at 67 (dollars)</label><input type="number" id="ben" inputmode="decimal" min="0" max="20000" step="50">
+<div id="cl-out" class="out"></div></div>
+</section>
+
+<details class="card"><summary>Model check and limits</summary><div id="chk-out"></div></details>
+<details class="card"><summary>How this works</summary>
+<p class="sm">Death rates (qx) for ages 0 to 119 come from the SSA 2023 period life table used in the 2026 Trustees Report. Survivors (lx) start at 100,000 and shrink by each year's rate. Remaining life comes from the area under the survival curve. A hazard ratio changes each rate by q' = 1 minus (1 minus q) raised to the ratio. Improvement multiplies the rate k years ahead by (1 minus r) to the k. The Factors tab can estimate a hazard ratio from smoking, weight, activity, and diabetes using published studies, rescaled to the population average and shrunk for overlap. Fractional ages use straight line interpolation. Break even ages ignore taxes, inflation adjustments, interest, and spousal benefits.</p></details>
+
+<footer><p><b>Not medical or financial advice.</b> Source: Social Security Administration, Actuarial Life Table, 2023 period table. Results are averages for a population, not forecasts for a person.</p>
+<p>Data: SSA 2023 period life table, 2026 Trustees Report. Updated October 25, 2026.</p>
+<p><a href="https://augustineiacopelli.github.io/appaday/">Back to the AppADay portfolio</a></p></footer>
+</div>
+<script>
+(function(){
+'use strict';
+var QX_M=[0.006015,0.000479,0.000320,0.000249,0.000194,0.000159,0.000137,0.000125,0.000120,0.000120,
+0.000125,0.000140,0.000173,0.000233,0.000327,0.000463,0.000634,0.000819,0.000999,0.001138,
+0.001235,0.001315,0.001378,0.001439,0.001509,0.001595,0.001685,0.001783,0.001876,0.001970,
+0.002085,0.002202,0.002308,0.002407,0.002490,0.002577,0.002665,0.002764,0.002864,0.002987,
+0.003115,0.003253,0.003419,0.003600,0.003777,0.003931,0.004073,0.004245,0.004477,0.004795,
+0.005126,0.005496,0.005917,0.006404,0.006923,0.007491,0.008173,0.008938,0.009714,0.010494,
+0.011337,0.012232,0.013196,0.014229,0.015316,0.016455,0.017574,0.018735,0.019981,0.021366,
+0.022903,0.024615,0.026504,0.028648,0.031071,0.033802,0.037010,0.041158,0.045461,0.050346,
+0.055633,0.061757,0.068358,0.075420,0.083364,0.092680,0.103459,0.115502,0.129018,0.143810,
+0.159458,0.176551,0.195360,0.216286,0.238799,0.262268,0.286291,0.310944,0.332325,0.349036,
+0.366568,0.384960,0.404252,0.424488,0.445712,0.467998,0.491398,0.515968,0.541766,0.568854,
+0.597297,0.627162,0.658520,0.691446,0.726018,0.762319,0.800435,0.840457,0.882480,0.926604];
+var QX_F=[0.005125,0.000392,0.000229,0.000188,0.000155,0.000133,0.000115,0.000105,0.000100,0.000098,
+0.000101,0.000111,0.000126,0.000152,0.000188,0.000229,0.000273,0.000323,0.000372,0.000410,
+0.000441,0.000476,0.000513,0.000546,0.000582,0.000609,0.000641,0.000683,0.000740,0.000808,
+0.000878,0.000947,0.001018,0.001089,0.001154,0.001209,0.001263,0.001347,0.001438,0.001533,
+0.001643,0.001742,0.001845,0.001954,0.002075,0.002187,0.002306,0.002438,0.002595,0.002791,
+0.003030,0.003288,0.003554,0.003847,0.004172,0.004532,0.004923,0.005365,0.005815,0.006333,
+0.006923,0.007555,0.008220,0.008881,0.009514,0.010188,0.010880,0.011659,0.012543,0.013581,
+0.014769,0.016153,0.017705,0.019495,0.021533,0.023846,0.026458,0.029700,0.033135,0.036982,
+0.041183,0.045959,0.051282,0.057262,0.064107,0.071752,0.080490,0.090566,0.102204,0.115178,
+0.129176,0.144229,0.160353,0.177635,0.196502,0.216846,0.238750,0.261359,0.283899,0.306491,
+0.329680,0.353333,0.377300,0.401416,0.425501,0.451031,0.478092,0.506778,0.537185,0.568854,
+0.597297,0.627162,0.658520,0.691446,0.726018,0.762319,0.800435,0.840457,0.882480,0.926604];
+var TABLES={m:QX_M,f:QX_F};
+var SSA_EX={m:{0:75.79,40:38.59,65:18.12},f:{0:81.06,40:42.64,65:20.66}};
+var KEY='appaday.171.state';
+var FACT={62:0.70,63:0.75,64:0.80,65:0.866667,66:0.933333,67:1,68:1.08,69:1.16,70:1.24};
+var COL={gold:'#E0B040',teal:'#4FB3C4',rose:'#E58AA3',mut:'#B0A998'};
+
+function lifeTable(q){var n=q.length,l=[100000],i;for(i=0;i<n;i++)l.push(l[i]*(1-q[i]));
+ var L=[],T=new Array(n),t=0;
+ for(i=0;i<n;i++)L.push(i===0?l[1]+0.1*(l[0]-l[1]):(l[i]+l[i+1])/2);
+ L[n-1]=l[n-1]*0.5;
+ for(i=n-1;i>=0;i--){t+=L[i];T[i]=t;}
+ return {l:l,e:T.map(function(v,k){return v/l[k];})};}
+function selfCheck(){['m','f'].forEach(function(s){var lt=lifeTable(TABLES[s]);[0,40,65].forEach(function(a){var d=Math.abs(lt.e[a]-SSA_EX[s][a]);if(d>0.1)console.warn('Pocket Actuary self check: '+s+' ex at '+a+' is '+lt.e[a].toFixed(2)+', SSA '+SSA_EX[s][a]);});});}
+
+function interp(l,age){var i=Math.floor(age),f=age-i;if(i>=120)return 0;return l[i]*(1-f)+l[i+1]*f;}
+function makeCurve(sex,x,hr,r){
+ var base=TABLES[sex],fx=Math.floor(x),l=new Array(121).fill(0),a,q,qq;
+ l[fx]=1;
+ for(a=fx;a<120;a++){q=base[a];
+  if(q>=1)qq=1;else{qq=1-Math.pow(1-q,hr);qq=qq*Math.pow(1-r,Math.max(0,a-x));}
+  if(qq>1)qq=1;l[a+1]=l[a]*(1-qq);}
+ var lx0=interp(l,x);
+ return {x:x,S:function(t){if(t<=0)return 1;var age=x+t;if(age>=120)return 0;return interp(l,age)/lx0;}};}
+function remaining(c){var s=0,dt=0.05,T=120-c.x,t;for(t=0;t<T;t+=dt){s+=(c.S(t)+c.S(Math.min(t+dt,T)))/2*dt;}return s;}
+function tAtFn(f,p,T){var dt=0.05,prev=1,tp=0,t,s;for(t=dt;t<=T+1e-9;t+=dt){s=f(t);if(s<=p){return tp+(prev-p)/(prev-s)*dt;}prev=s;tp=t;}return T;}
+function tAt(c,p){return tAtFn(c.S,p,120-c.x);}
+
+
+var EST={DAMP:0.65,PREV_SMOKE:0.11,PREV_DIA:0.15,HR_DIA:1.8,
+ SMOKE:{m:2.8,f:3.0},
+ BMI:[[18.5,1.51],[20,1.13],[25,1.0],[27.5,1.07],[30,1.20],[35,1.45],[40,1.94],[999,2.76]],
+ ACT:{none:1,low:0.80,a:0.69,b:0.63,c:0.61},
+ FAM:{PER_DEC:0.835,CENTER:79,LO:69,HI:95,BOTH:0.7,LIVE_MIN:80,G_PER_DEC:Math.sqrt(0.835),G_CENTER:76,G_LO:65,G_HI:95},
+ MAR:{PREV:{married:0.50,never:0.32,divorced:0.12,widowed:0.06},RR:{m:{married:1,never:1.67,divorced:1.59,widowed:1.30},f:{married:1,never:1.46,divorced:1.27,widowed:1.14}},SHRINK:0.5,MIN_AGE:30}};
+EST.BMI_TAPER=Math.log(1.21)/Math.log(1.52);
+function ageTaper(a){if(a==null||a<=60)return 1;if(a>=80)return EST.BMI_TAPER;return 1-(1-EST.BMI_TAPER)*(a-60)/20;}
+function bmiMean(tf){function t(h){return Math.pow(h,tf);}return 0.269*1+0.307*t((1.07+1.20)/2)+0.332*t((1.45+1.94)/2)+0.092*t(2.76);}
+EST.ACT_MEAN=0.528*((1+0.80)/2)+0.472*((0.69+0.63+0.61)/3);
+function bmiOf(e){var h=+e.ht,w=+e.wt;if(!(h>=48&&h<=84&&w>=70&&w<=600))return null;return 703*w/(h*h);}
+function bmiHr(b){var i;for(i=0;i<EST.BMI.length;i++)if(b<EST.BMI[i][0])return EST.BMI[i][1];return 2.76;}
+function marRel(s,sex){var M=EST.MAR;if(!M.PREV[s])return null;function one(t){var m=0,k;for(k in M.PREV)m+=M.PREV[k]*M.RR[t][k];return M.RR[t][s]/m;}
+ return Math.pow(one(sex),M.SHRINK);}
+function parentHr(s,a){if(s!=='died'&&s!=='living')return null;a=+a;if(!(a>=1&&a<=120))return null;if(s==='living'&&a<EST.FAM.LIVE_MIN)return null;
+ var c=Math.min(EST.FAM.HI,Math.max(EST.FAM.LO,a));return {hr:Math.pow(EST.FAM.PER_DEC,(c-EST.FAM.CENTER)/10),low:s==='died'&&a<EST.FAM.LO,txt:(s==='died'?'died at ':'living at ')+Math.round(a)};}
+function grandHr(a){a=+a;if(!(a>=1&&a<=120))return null;var c=Math.min(EST.FAM.G_HI,Math.max(EST.FAM.G_LO,a));return {hr:Math.pow(EST.FAM.G_PER_DEC,(c-EST.FAM.G_CENTER)/10),txt:'grandparents averaged '+Math.round(a)};}
+function estimate(e,sex,age){
+ var items=[],lg=0,b=bmiOf(e),tf=ageTaper(age);
+ function add(name,rel,txt){items.push({name:name,rel:rel,txt:txt});lg+=Math.log(rel);}
+ if(e.smoke!=='skip'){var cur=EST.SMOKE[sex],mean=EST.PREV_SMOKE*cur+(1-EST.PREV_SMOKE);
+  var hr=e.smoke==='current'?cur:(e.smoke==='late'?Math.pow(cur,0.4):1);
+  add('Smoking',hr/mean,e.smoke==='current'?'Currently smoke':e.smoke==='late'?'Quit at 45 or later':'Never, or quit before 45');}
+ if(b!==null)add('Weight',Math.pow(bmiHr(b),tf)/bmiMean(tf),'BMI '+b.toFixed(1));
+ if(e.act!=='skip'){var L={none:'No leisure activity',low:'Under 150 minutes a week',a:'150 to 300 minutes a week',b:'300 to 450 minutes a week',c:'450 minutes or more a week'};add('Activity',EST.ACT[e.act]/EST.ACT_MEAN,L[e.act]);}
+ if(e.dia!=='skip'){var m2=EST.PREV_DIA*EST.HR_DIA+(1-EST.PREV_DIA);add('Diabetes',(e.dia==='yes'?EST.HR_DIA:1)/m2,e.dia==='yes'?'Has diabetes':'No diabetes');}
+ var pm=parentHr(e.momS,e.momA),pd=parentHr(e.dadS,e.dadA),famLow=false;
+ if(pm||pd){var fl=(pm?Math.log(pm.hr):0)+(pd?Math.log(pd.hr):0),tx=[];if(pm){tx.push('mother '+pm.txt);}if(pd){tx.push('father '+pd.txt);}if(pm&&pd)fl*=EST.FAM.BOTH;famLow=!!((pm&&pm.low)||(pd&&pd.low));add('Family history',Math.exp(fl),tx.join(', '));}
+ var marSkip=false;
+ if(e.marS&&e.marS!=='skip'){if(age!=null&&age<EST.MAR.MIN_AGE)marSkip=true;else{var L2={married:'Married',never:'Never married',divorced:'Divorced or separated',widowed:'Widowed'},mr=marRel(e.marS,sex);if(mr!==null)add('Marital status',mr,L2[e.marS]);}}
+ var gsk=false;
+ if(e.grA){var gh=grandHr(e.grA);if(gh){if(pm||pd)gsk=true;else add('Family history',gh.hr,gh.txt+' (half strength)');}}
+ if(!items.length)return null;
+ var raw=Math.exp(lg),hr2=Math.min(3,Math.max(0.3,Math.exp(EST.DAMP*lg)));
+ return {items:items,raw:raw,hr:hr2,bmi:b,tf:tf,famLow:famLow,grSkip:gsk,marSkip:marSkip};}
+function tableTxt(hr){
+ if(hr>=1.125){var n=Math.min(10,Math.round((hr-1)/0.25)),L='ABCDEFGHIJ'.charAt(n-1);return 'In insurance terms this is about '+Math.round(hr*100)+' percent of standard mortality, near Table '+L+' (each table adds 25 percent).';}
+ if(hr<=0.9)return 'Below 100 percent of standard mortality, the territory of preferred risk classes. Insurers set their own cutoffs.';
+ return 'Close to standard mortality in insurance terms.';}
+function opt(v,l,sel){return '<option value="'+v+'"'+(sel===v?' selected':'')+'>'+l+'</option>';}
+function buildEstForm(){
+ estLast='';
+ var e=S.est[S.estFor],h='<div class="stack">';
+ h+='<div><label for="e-smoke">Smoking</label><select id="e-smoke" data-e="smoke">'+opt('skip','Skip this question',e.smoke)+opt('never','Never smoked, or quit before 45',e.smoke)+opt('late','Quit at 45 or later',e.smoke)+opt('current','Currently smoke',e.smoke)+'</select></div>';
+ h+='<div><label>Height and weight</label><div class="row"><input id="e-ht" data-e="ht" type="number" inputmode="decimal" min="48" max="84" placeholder="Height, inches" aria-label="Height in inches" value="'+e.ht+'"><input id="e-wt" data-e="wt" type="number" inputmode="decimal" min="70" max="600" placeholder="Weight, pounds" aria-label="Weight in pounds" value="'+e.wt+'"></div><div class="sm" id="e-bmi"></div></div>';
+ h+='<div><label for="e-act">Leisure time exercise (walking, sports, workouts)</label><select id="e-act" data-e="act">'+opt('skip','Skip this question',e.act)+opt('none','None',e.act)+opt('low','Some, under 150 minutes a week',e.act)+opt('a','150 to 300 minutes a week',e.act)+opt('b','300 to 450 minutes a week',e.act)+opt('c','450 minutes or more a week',e.act)+'</select></div>';
+ h+='<div><label for="e-dia">Diabetes</label><select id="e-dia" data-e="dia">'+opt('skip','Skip this question',e.dia)+opt('no','No diabetes',e.dia)+opt('yes','Diagnosed with diabetes',e.dia)+'</select></div>';
+
+ function par(id,k,lab,s,a){return '<div><label for="e-'+id+'s">'+lab+'</label><div class="row" style="grid-template-columns:3fr 2fr"><select id="e-'+id+'s" data-e="'+k+'S">'+opt('skip','Skip',s)+opt('died','Died at age',s)+opt('living','Living, 80 or older',s)+opt('acc','Died of an accident',s)+'</select><input id="e-'+id+'a" data-e="'+k+'A" type="number" inputmode="numeric" min="1" max="120" placeholder="Age" aria-label="'+lab+' age" value="'+a+'"></div></div>';}
+ h+='<div><label for="e-mar">Marital status</label><select id="e-mar" data-e="marS">'+opt('skip','Skip this question',e.marS)+opt('married','Married',e.marS)+opt('never','Never married',e.marS)+opt('divorced','Divorced or separated',e.marS)+opt('widowed','Widowed',e.marS)+'</select></div>';
+ h+=par('mom','mom','Mother',e.momS,e.momA)+par('dad','dad','Father',e.dadS,e.dadA);
+ h+='<div><label for="e-gra">Grandparents, average age at death (optional)</label><input id="e-gra" data-e="grA" type="number" inputmode="numeric" min="1" max="120" placeholder="Average age, skip accidents" aria-label="Grandparents average age at death" value="'+e.grA+'"><div class="sm">Counted only when neither parent gives a family history line, for example while both are alive and under 80.</div></div>';
+ $('est-form').innerHTML=h+'</div>';
+ $('hr-you').hidden=S.estFor==='p';$('hr-p').hidden=S.estFor!=='p';
+ Array.prototype.forEach.call(document.querySelectorAll('[data-ef]'),function(b){b.setAttribute('aria-pressed',String(b.getAttribute('data-ef')===S.estFor));});}
+var estLast='';
+function putEst(el,h){if(h===estLast)return;estLast=h;el.innerHTML=h;}
+function renderEstOut(){
+ var el=$('est-out');if(!el)return;
+ var who=S.estFor,sex=who==='you'?S.sex:S.pSex,r=estimate(S.est[who],sex,ageOf(who==='you'?S.birth:S.pBirth)),bm=$('e-bmi');
+ ['mom','dad'].forEach(function(k){var a=$('e-'+k+'a');if(a)a.disabled=['died','living'].indexOf(S.est[who][k+'S'])<0;});
+ var b=bmiOf(S.est[who]);if(bm)bm.textContent=b===null?'Enter height in inches and weight in pounds to include weight.':'BMI '+b.toFixed(1);
+ if(!r){putEst(el,'<p class="sm">Answer at least one question to see an estimate.</p>');return;}
+ var h='<div class="kpis"><div class="kpi"><small>Estimated hazard ratio</small><span class="est-big">'+r.hr.toFixed(2)+'</span></div><div class="kpi"><small>Rule of thumb range</small><span class="big" style="font-size:1.3rem">'+Math.max(0.3,r.hr*0.8).toFixed(2)+' to '+Math.min(3,r.hr*1.25).toFixed(2)+'</span></div></div>';
+ r.items.forEach(function(i){var d=Math.round((i.rel-1)*100);h+='<div class="est-row"><span>'+i.name+': '+i.txt+'</span><span class="hi">'+i.rel.toFixed(2)+'</span></div>';});
+ h+='<p class="sm">Each line is that answer compared with the average American. Multiplied together they give '+r.raw.toFixed(2)+'. Shrunk for overlap between factors, the estimate is '+r.hr.toFixed(2)+'. '+tableTxt(r.hr)+'</p>';
+ if(r.bmi!==null&&r.tf<0.999)h+='<p class="sm">The weight effect is scaled to '+Math.round(r.tf*100)+' percent of its usual strength at this age. The Global BMI Mortality Collaboration found 1.52 per 5 BMI units above 25 at ages 35 to 49 but 1.21 at ages 70 to 89.</p>';
+ if(r.marSkip)h+='<p class="sm">Marital status is not counted under age 30, because the studies behind it cover adults and the effect is small at young ages.</p>';
+ if(r.grSkip)h+='<p class="sm">Grandparents are not counted here because a parent line already applies.</p>';
+ if(r.famLow)h+='<p class="sm">A parent who died before 69 is counted as dying at 69, because the study behind the family history line covers later deaths.</p>';
+ var cur=who==='you'?S.hr:S.pHr;
+ if(Math.abs(cur-r.hr)>=0.005)h+='<p class="sm">You moved the slider to '+cur.toFixed(2)+'. The estimate is '+r.hr.toFixed(2)+'.</p><button type="button" class="btn gold" data-apply="1">Reset to the estimate</button>';else h+='<p class="sm">The slider below follows this estimate automatically.</p>';
+putEst(el,h);}
+
+
+function renderFx(){
+ var el=$('fx-out'),p=person(S.sex,S.birth,S.hr);
+ if(!el)return;
+ if(!p){el.innerHTML='<p class="err">Enter a valid birthdate on the Survival tab.</p>';return;}
+ var base=makeCurve(S.sex,p.x,1,S.r/100),cur=cv(p,S.r),good=makeCurve(S.sex,p.x,S.hr*0.8,S.r/100),bad=makeCurve(S.sex,p.x,S.hr*1.25,S.r/100);
+ var T=120-p.x,tm=T,t;for(t=0.5;t<=T;t+=0.5){if(good.S(t)<0.003&&base.S(t)<0.003){tm=t;break;}}
+ var x1=Math.min(120,Math.ceil((p.x+tm)/5)*5);if(x1<p.x+5)x1=Math.min(120,Math.ceil(p.x+5));var TT=x1-p.x;
+ var ey=remaining(cur)-remaining(base),ma=(p.x+tAt(cur,0.5))-(p.x+tAt(base,0.5));
+ function sg(v){return (v>=0?'+':'')+v.toFixed(1);}
+ var h='<div class="kpis"><div class="kpi"><small>Average years left</small><span class="big">'+f1(remaining(cur))+'</span><small>'+sg(ey)+' versus the table average</small></div><div class="kpi"><small>Median age at death</small><span class="big">'+ageTxt(cur,0.5)+'</span><small>'+sg(ma)+' versus the table average</small></div></div>';
+ h+=chart({x0:p.x,x1:x1,xl:'Age',label:'Chance of being alive with your hazard ratio compared with the table average',band:{lo:sample(bad.S,TT,p.x,0.5),hi:sample(good.S,TT,p.x,0.5)},series:[{c:COL.mut,p:sample(base.S,TT,p.x,0.5),w:2},{c:COL.gold,p:sample(cur.S,TT,p.x,0.5)}]});
+ h+=leg([[COL.gold,'Your hazard ratio '+S.hr.toFixed(2)],['rgba(224,176,64,.35)','Rule of thumb range, 20 percent below to 25 percent above'],[COL.mut,'Table average, 1.00']]);
+ el.innerHTML=h+(Math.abs(S.hr-1)<0.005?'<p class="sm">At 1.00 your curve matches the table average.</p>':'');}
+
+function calib(sex){
+ var best={smoke:'never',ht:'70',wt:'153',act:'a',dia:'no'},worst={smoke:'current',ht:'70',wt:'223',act:'none',dia:'no'};
+ var a=estimate(best,sex,50),b=estimate(worst,sex,50);
+ var gap=remaining(makeCurve(sex,50,a.hr,0))-remaining(makeCurve(sex,50,b.hr,0));
+ return {hb:a.hr,hw:b.hr,gap:gap};}
+function renderChk(){
+ var el=$('chk-out');if(!el)return;
+ var h='<h3>Life table check</h3><p class="sm">Life expectancy recomputed from the embedded death rates and compared with the SSA published column.</p><table><tr><th>Table</th><th class="r">Age</th><th class="r">Computed</th><th class="r">SSA</th></tr>',mx=0;
+ ['m','f'].forEach(function(sx){var lt=lifeTable(TABLES[sx]);[0,40,65].forEach(function(a){var d=Math.abs(lt.e[a]-SSA_EX[sx][a]);if(d>mx)mx=d;h+='<tr><td>'+(sx==='m'?'Male':'Female')+'</td><td class="r">'+a+'</td><td class="r">'+lt.e[a].toFixed(2)+'</td><td class="r">'+SSA_EX[sx][a].toFixed(2)+'</td></tr>';});});
+ h+='</table><p class="sm">Largest difference: '+mx.toFixed(2)+' years. With a hazard ratio of 1.00 and no improvement, the app reproduces the SSA table.</p>';
+ var cm=calib('m'),cf=calib('f');
+ h+='<h3>Calibration against a published study</h3><p class="sm">At age 50, comparing a healthy profile (never smoker, BMI 22, 150 to 300 minutes of exercise a week) with an unhealthy one (current smoker, BMI 32, no exercise), the estimator gives hazard ratios of '+cm.hb.toFixed(2)+' and '+cm.hw.toFixed(2)+' for men and '+cf.hb.toFixed(2)+' and '+cf.hw.toFixed(2)+' for women. That is a gap of '+cm.gap.toFixed(1)+' years of life expectancy for men and '+cf.gap.toFixed(1)+' for women. Li and colleagues (Circulation, 2018) found 12.2 years for men and 14.0 for women between five healthy habits and none. Their habits also include diet and alcohol, which this estimator does not use, so a somewhat smaller gap is expected.</p>';
+ h+='<h3>Limits</h3><p class="sm">Population averages, not forecasts for a person. Mortality is assumed to follow the 2023 table with optional smooth improvement, so shocks such as a pandemic are not modeled. Both partners in the Together tab are treated as independent, although spouses share habits and risks. Hazard ratios come from cohorts that differ from the SSA population, and several are shrunk or rescaled using my own assumptions, listed on the Factors tab. A prior diagnosis, the cause of death of a parent, family history of specific diseases, medications, and many other factors are not captured.</p>';
+ el.innerHTML=h;}
+function summaryText(){
+ var p=person(S.sex,S.birth,S.hr);if(!p)return 'Enter a valid birthdate first.';
+ var c=cv(p,S.r),L=['Pocket Actuary summary (AppADay 171)','Table: '+({m:'SSA 2023 male',f:'SSA 2023 female'})[S.sex],'Current age: '+f1(p.x),'Hazard ratio: '+S.hr.toFixed(2),'Mortality improvement: '+S.r+'% a year','Average years left: '+f1(remaining(c)),'Median age at death: '+ageTxt(c,0.5)];
+ [65,75,85,90,95].forEach(function(a){if(a>p.x)L.push('Chance of being alive at '+a+': '+pct(c.S(a-p.x)));});
+ L.push('Age when the chance of being alive falls to 75, 50, 25, and 10 percent: '+[0.75,0.5,0.25,0.1].map(function(q){return ageTxt(c,q);}).join(', '));
+ L.push('Educational illustration from the SSA 2023 period life table. Not medical or financial advice.');
+ return L.join('\n');}
+function copyFallback(t){var a=document.createElement('textarea');a.value=t;a.style.cssText='position:fixed;opacity:0;top:0';document.body.appendChild(a);a.select();var ok=false;try{ok=document.execCommand('copy');}catch(e){}document.body.removeChild(a);return ok;}
+function copySummary(){
+ var t=summaryText(),m=$('copy-msg'),w=$('copy-box-wrap');w.innerHTML='';
+ function ok(){m.textContent='Copied to the clipboard.';}
+ function fail(){m.textContent='Copy was blocked. Select the text below.';w.innerHTML='<textarea readonly rows="9" style="width:100%;margin-top:8px;background:var(--bg);color:var(--text);border:1px solid var(--line);border-radius:10px;padding:8px;font:inherit;font-size:.85rem"></textarea>';var ta=w.firstChild;ta.value=t;ta.focus();ta.select();}
+ if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(t).then(ok,function(){if(copyFallback(t))ok();else fail();});}
+ else if(copyFallback(t))ok();else fail();}
+
+var TABS=['survival','together','factors','horizon'];
+function pad(n){return (n<10?'0':'')+n;}
+function ymd(d){return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());}
+function yearsAgo(n){var d=new Date();d.setFullYear(d.getFullYear()-n);return ymd(d);}
+var DEF={tab:'survival',sex:'m',birth:yearsAgo(45),hr:1,r:1,custom:90,pSex:'f',pBirth:yearsAgo(43),pHr:1,benefit:2000,ack:false,estFor:'you',est:{you:{smoke:'skip',ht:'',wt:'',act:'skip',dia:'skip',momS:'skip',momA:'',dadS:'skip',dadA:'',grA:'',marS:'skip'},p:{smoke:'skip',ht:'',wt:'',act:'skip',dia:'skip',momS:'skip',momA:'',dadS:'skip',dadA:'',grA:'',marS:'skip'}}};
+var S=load();
+function num(v,lo,hi,d){v=Number(v);if(!isFinite(v))return d;return Math.min(hi,Math.max(lo,v));}
+function sanEst(o){o=o||{};function pick(v,a,d){return a.indexOf(v)>=0?v:d;}
+ return {smoke:pick(o.smoke,['skip','never','late','current'],'skip'),act:pick(o.act,['skip','none','low','a','b','c'],'skip'),dia:pick(o.dia,['skip','no','yes'],'skip'),momS:pick(o.momS,['skip','died','living','acc'],'skip'),dadS:pick(o.dadS,['skip','died','living','acc'],'skip'),momA:/^\d{1,3}$/.test(String(o.momA||''))?String(o.momA):'',dadA:/^\d{1,3}$/.test(String(o.dadA||''))?String(o.dadA):'',marS:pick(o.marS,['skip','married','never','divorced','widowed'],'skip'),grA:/^\d{1,3}$/.test(String(o.grA||''))?String(o.grA):'',ht:/^\d{0,3}(\.\d+)?$/.test(String(o.ht||''))?String(o.ht||''):'',wt:/^\d{0,3}(\.\d+)?$/.test(String(o.wt||''))?String(o.wt||''):''};}
+function load(){var s={},k,o=null;for(k in DEF)s[k]=DEF[k];
+ try{o=JSON.parse(localStorage.getItem(KEY)||'null');}catch(e){o=null;}
+ if(o&&typeof o==='object'){
+  if(TABS.indexOf(o.tab)>=0)s.tab=o.tab;
+  if(TABLES[o.sex])s.sex=o.sex;if(TABLES[o.pSex])s.pSex=o.pSex;
+  if(/^\d{4}-\d{2}-\d{2}$/.test(o.birth))s.birth=o.birth;
+  if(/^\d{4}-\d{2}-\d{2}$/.test(o.pBirth))s.pBirth=o.pBirth;
+  s.hr=num(o.hr,0.3,3,1);s.pHr=num(o.pHr,0.3,3,1);
+  if(o.r===0||o.r===1||o.r===2)s.r=o.r;
+  s.custom=num(o.custom,0,120,90);s.benefit=num(o.benefit,0,20000,2000);s.ack=o.ack===true;
+  if(o.estFor==='p')s.estFor='p';
+  if(o.est){s.est={you:sanEst(o.est.you),p:sanEst(o.est.p)};}}
+ return s;}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){}}
+function ageOf(b){var m=/^(\d{4})-(\d{2})-(\d{2})$/.exec(b||'');if(!m)return null;
+ var d=new Date(+m[1],+m[2]-1,+m[3]);if(isNaN(d))return null;
+ var a=(Date.now()-d.getTime())/(365.2425*864e5);if(a<0)return null;return Math.min(a,119.9);}
+function person(sex,birth,hr){var a=ageOf(birth);return a==null?null:{sex:sex,x:a,hr:hr};}
+function cv(p,r){return makeCurve(p.sex,p.x,p.hr,r/100);}
+function $(id){return document.getElementById(id);}
+function pct(p){if(p<0.0005)return '<0.1%';if(p>0.9995)return '>99.9%';return (p*100).toFixed(1)+'%';}
+function f1(v){return v.toFixed(1);}
+function money(v){return '$'+Math.round(v).toLocaleString('en-US');}
+
+function chart(o){
+ var W=340,H=o.h||230,ml=38,mr=10,mt=10,mb=32,pw=W-ml-mr,ph=H-mt-mb,i,s;
+ function X(v){return ml+(v-o.x0)/(o.x1-o.x0)*pw;}
+ function Y(v){return mt+(1-v)*ph;}
+ s='<svg class="chart" viewBox="0 0 '+W+' '+H+'" role="img" aria-label="'+o.label+'">';
+ [0,0.25,0.5,0.75,1].forEach(function(v){s+='<line x1="'+ml+'" x2="'+(W-mr)+'" y1="'+Y(v).toFixed(1)+'" y2="'+Y(v).toFixed(1)+'" stroke="#34302A" stroke-width="1"/><text x="'+(ml-6)+'" y="'+(Y(v)+3).toFixed(1)+'" text-anchor="end">'+Math.round(v*100)+'%</text>';});
+ var span=o.x1-o.x0,step=span>60?10:span>25?5:span>12?2:1,st=Math.ceil(o.x0/step)*step;
+ for(i=st;i<=o.x1+1e-9;i+=step){s+='<line x1="'+X(i).toFixed(1)+'" x2="'+X(i).toFixed(1)+'" y1="'+mt+'" y2="'+(mt+ph)+'" stroke="#2A2620" stroke-width="1"/><text x="'+X(i).toFixed(1)+'" y="'+(H-mb+14)+'" text-anchor="middle">'+i+'</text>';}
+ s+='<text x="'+(ml+pw/2)+'" y="'+(H-4)+'" text-anchor="middle">'+o.xl+'</text>';
+ if(o.band){var pts=o.band.hi.map(function(p){return X(p[0]).toFixed(1)+','+Y(p[1]).toFixed(1);}).concat(o.band.lo.slice().reverse().map(function(p){return X(p[0]).toFixed(1)+','+Y(p[1]).toFixed(1);}));
+  s+='<polygon points="'+pts.join(' ')+'" fill="'+COL.gold+'" opacity="0.22"/>';}
+ o.series.forEach(function(se){s+='<polyline fill="none" stroke="'+se.c+'" stroke-width="'+(se.w||2.5)+'" stroke-linejoin="round" stroke-linecap="round" points="'+se.p.map(function(p){return X(p[0]).toFixed(1)+','+Y(p[1]).toFixed(1);}).join(' ')+'"/>';});
+ return s+'</svg>';}
+function sample(f,T,off,step){var a=[],t;for(t=0;t<T;t+=step)a.push([off+t,f(t)]);a.push([off+T,f(T)]);return a;}
+function leg(items){return '<div class="legend">'+items.map(function(i){return '<span><i style="background:'+i[0]+'"></i>'+i[1]+'</span>';}).join('')+'</div>';}
+function ageTxt(c,p){var t=tAt(c,p);return f1(c.x+t);}
+
+function renderSurvival(){
+ var el=$('sv-out'),p=person(S.sex,S.birth,S.hr);
+ if(!p){el.innerHTML='<p class="err">Enter a valid birthdate in the past.</p>';return;}
+ var c0=cv(p,0),c2=cv(p,2),cs=cv(p,S.r),T=120-p.x;
+ var tm=T,t;for(t=0.5;t<=T;t+=0.5){if(c2.S(t)<0.003){tm=t;break;}}
+ var x1=Math.min(120,Math.ceil((p.x+tm)/5)*5);if(x1<p.x+5)x1=Math.min(120,Math.ceil(p.x+5));
+ var TT=x1-p.x;
+ var h='<div class="kpis"><div class="kpi"><small>Current age</small><span class="big">'+f1(p.x)+'</span></div><div class="kpi"><small>Average years left</small><span class="big">'+f1(remaining(cs))+'</span></div>'
+ +'<div class="kpi"><small>Median age at death</small><span class="big">'+ageTxt(cs,0.5)+'</span></div><div class="kpi"><small>Improvement</small><span class="big">'+S.r+'%</span></div></div>';
+ h+=chart({x0:p.x,x1:x1,xl:'Age',label:'Chance of being alive by age',band:{lo:sample(c0.S,TT,p.x,0.5),hi:sample(c2.S,TT,p.x,0.5)},series:[{c:COL.gold,p:sample(cs.S,TT,p.x,0.5)}]});
+ h+=leg([[COL.gold,'Selected, '+S.r+'% improvement'],['rgba(224,176,64,.35)','Band from 0% to 2%']]);
+ h+='<h3>Chance of being alive at</h3><table><tr><th>Age</th><th class="r">Chance</th><th class="r">0% to 2%</th></tr>';
+ var ages=[65,75,85,90,95,100],cu=Math.round(S.custom);
+ ages.concat([cu]).forEach(function(a,i){
+  var lab=i===ages.length?'<input type="number" id="cust" inputmode="numeric" min="0" max="120" value="'+cu+'" aria-label="Custom age" style="width:84px">':a;
+  if(a<=p.x){h+='<tr><td>'+lab+'</td><td class="r" colspan="2">Already reached</td></tr>';}
+  else{var tt=a-p.x;h+='<tr><td>'+lab+'</td><td class="r hi">'+pct(cs.S(tt))+'</td><td class="r sm">'+pct(c0.S(tt))+' to '+pct(c2.S(tt))+'</td></tr>';}});
+ h+='</table><h3>Age when the chance of being alive falls to</h3><table><tr><th>Chance</th><th class="r">Age</th><th class="r">0% to 2%</th></tr>';
+ [0.9,0.75,0.5,0.25,0.1].forEach(function(q){h+='<tr><td>'+Math.round(q*100)+'%</td><td class="r hi">'+ageTxt(cs,q)+'</td><td class="r sm">'+ageTxt(c0,q)+' to '+ageTxt(c2,q)+'</td></tr>';});
+ el.innerHTML=h+'</table>';
+ var ci=$('cust');if(ci)ci.addEventListener('change',function(){S.custom=num(ci.value,0,120,90);save();renderSurvival();var n=$('cust');if(n)n.focus();});}
+
+function renderTogether(){
+ var el=$('tg-out'),a=person(S.sex,S.birth,S.hr),b=person(S.pSex,S.pBirth,S.pHr);
+ if(!a||!b){el.innerHTML='<p class="err">Enter valid birthdates in the past for both people.</p>';return;}
+ var A=cv(a,S.r),B=cv(b,S.r);
+ var both=function(t){return A.S(t)*B.S(t);},any=function(t){return 1-(1-A.S(t))*(1-B.S(t));},one=function(t){var x=A.S(t),y=B.S(t);return x+y-2*x*y;};
+ var Tmax=Math.max(120-a.x,120-b.x),tm=Tmax,t;
+ for(t=0.5;t<=Tmax;t+=0.5){if(any(t)<0.003){tm=t;break;}}
+ var TT=Math.min(Tmax,Math.max(5,Math.ceil(tm/5)*5));
+ var tf=tAtFn(both,0.5,Tmax),tl=tAtFn(any,0.5,Tmax);
+ var h='<div class="kpis"><div class="kpi"><small>Median years to first death</small><span class="big">'+f1(tf)+'</span></div><div class="kpi"><small>Median years to last death</small><span class="big">'+f1(tl)+'</span></div></div>';
+ h+=chart({x0:0,x1:TT,xl:'Years from today',label:'Chance both alive, at least one alive, and exactly one alive',series:[{c:COL.gold,p:sample(both,TT,0,0.5)},{c:COL.teal,p:sample(any,TT,0,0.5)},{c:COL.rose,p:sample(one,TT,0,0.5)}]});
+ h+=leg([[COL.gold,'Both alive'],[COL.teal,'At least one alive'],[COL.rose,'Exactly one alive (a survivor)']]);
+ h+='<h3>In '+'5, 10, 20, and 30 years</h3><table><tr><th>Years</th><th class="r">Both</th><th class="r">At least one</th><th class="r">One only</th></tr>';
+ [5,10,20,30].forEach(function(y){if(y<=Tmax)h+='<tr><td>'+y+'</td><td class="r">'+pct(both(y))+'</td><td class="r">'+pct(any(y))+'</td><td class="r">'+pct(one(y))+'</td></tr>';});
+ el.innerHTML=h+'</table><p class="sm">Uses the '+S.r+'% improvement setting and each person\'s hazard ratio from the Factors tab. Median to first death is when the chance both are alive reaches 50%. Median to last death is when the chance at least one is alive reaches 50%.</p>';}
+
+function renderFactors(){
+ $('hr').value=S.hr;$('phr').value=S.pHr;$('hrv').textContent=S.hr.toFixed(2);$('phrv').textContent=S.pHr.toFixed(2);
+ Array.prototype.forEach.call(document.querySelectorAll('[data-r]'),function(b){b.setAttribute('aria-pressed',String(+b.getAttribute('data-r')===S.r));});}
+
+function renderHorizon(){
+ var el=$('hz-out'),p=person(S.sex,S.birth,S.hr);
+ if(!p){el.innerHTML='<p class="err">Enter a valid birthdate in the past on the Survival tab.</p>';return;}
+ var c=cv(p,S.r),med=p.x+tAt(c,0.5),p25=p.x+tAt(c,0.25);
+ var rows=(p25>=98||p.x>=98)?120:100,cols=52,left=26,top=6,W=340,pitch=(W-left-4)/cols,H=rows*pitch+top+6,sz=pitch-1;
+ function cx(w){return left+w*pitch;}function cy(r){return top+r*pitch;}
+ var wl=Math.floor(p.x*52),fr=Math.floor(wl/52),part=wl%52;
+ var s='<svg class="chart" viewBox="0 0 '+W+' '+H.toFixed(0)+'" role="img" aria-label="Weeks of life, one row per year of age, 52 weeks per row">';
+ s+='<defs><pattern id="pd" patternUnits="userSpaceOnUse" x="'+left+'" y="'+top+'" width="'+pitch.toFixed(3)+'" height="'+pitch.toFixed(3)+'"><rect width="'+sz.toFixed(2)+'" height="'+sz.toFixed(2)+'" rx="1" fill="#2C2820"/></pattern><pattern id="pl" patternUnits="userSpaceOnUse" x="'+left+'" y="'+top+'" width="'+pitch.toFixed(3)+'" height="'+pitch.toFixed(3)+'"><rect width="'+sz.toFixed(2)+'" height="'+sz.toFixed(2)+'" rx="1" fill="'+COL.gold+'"/></pattern></defs>';
+ s+='<rect x="'+left+'" y="'+top+'" width="'+(cols*pitch).toFixed(1)+'" height="'+(rows*pitch).toFixed(1)+'" fill="url(#pd)"/>';
+ if(fr>0)s+='<rect x="'+left+'" y="'+top+'" width="'+(cols*pitch).toFixed(1)+'" height="'+(fr*pitch).toFixed(1)+'" fill="url(#pl)"/>';
+ if(part>0)s+='<rect x="'+left+'" y="'+cy(fr).toFixed(1)+'" width="'+(part*pitch).toFixed(1)+'" height="'+pitch.toFixed(2)+'" fill="url(#pl)"/>';
+ var d;for(d=0;d<rows;d+=10)s+='<text x="'+(left-4)+'" y="'+(cy(d)+pitch-1).toFixed(1)+'" text-anchor="end">'+d+'</text>';
+ function mark(age,color,label,side){if(age>=rows)age=rows-0.001;var r=Math.floor(age),w=Math.floor((age-r)*52);
+  var y=cy(r),lw=label.length*5.6+12;
+  s+='<rect x="'+left+'" y="'+y.toFixed(1)+'" width="'+(cols*pitch).toFixed(1)+'" height="'+pitch.toFixed(2)+'" fill="'+color+'" opacity="0.35"/>';
+  s+='<rect x="'+(cx(w)-1).toFixed(1)+'" y="'+(y-1).toFixed(1)+'" width="'+(pitch+1).toFixed(1)+'" height="'+(pitch+1).toFixed(1)+'" rx="1.5" fill="'+color+'" stroke="#fff" stroke-width="1"/>';
+  var lx=side?W-6-lw:left+6,ly=y-(r>4?15:-2);if(!side&&r<=4)ly=y+pitch+2;
+  s+='<rect x="'+lx.toFixed(1)+'" y="'+ly.toFixed(1)+'" width="'+lw.toFixed(1)+'" height="13" rx="4" fill="#0F0E0C" stroke="'+color+'"/><text x="'+(lx+6).toFixed(1)+'" y="'+(ly+9.5).toFixed(1)+'" style="fill:#F0ECE2">'+label+'</text>';}
+ mark(med,COL.teal,'Median '+f1(med),true);
+ mark(p25,COL.rose,'25th pct '+f1(p25),false);
+ s+='</svg>';
+ el.innerHTML='<p class="sm">Each row is a year of age, each square a week. Gold squares are the '+wl.toLocaleString('en-US')+' weeks you have lived.</p>'+s+leg([[COL.gold,'Weeks lived'],[COL.teal,'Median age at death, '+f1(med)],[COL.rose,'Age with 25% chance of still being alive, '+f1(p25)]]);}
+
+function renderClaim(){
+ var el=$('cl-out'),p=person(S.sex,S.birth,S.hr);
+ $('ben').value=S.benefit;
+ var h='<div class="chip3">',a;
+ for(a=62;a<=70;a++)h+='<div class="chip">Age '+a+'<b>'+money(S.benefit*FACT[a])+'</b>'+Math.round(FACT[a]*1000)/10+'%</div>';
+ h+='</div>';
+ if(!p){el.innerHTML=h+'<p class="err">Enter a valid birthdate on the Survival tab for break even odds.</p>';return;}
+ var c=cv(p,S.r);
+ h+='<table><tr><th>Compare</th><th class="r">Break even age</th><th class="r">Chance you reach it</th></tr>';
+ [[62,67],[67,70],[62,70]].forEach(function(pr){var A=pr[0],B=pr[1],bA=FACT[A],bB=FACT[B],T=(bB*B-bA*A)/(bB-bA);
+  var pr2=T<=p.x?'Already past':pct(c.S(T-p.x));
+  h+='<tr><td>'+A+' vs '+B+'</td><td class="r hi">'+f1(T)+'</td><td class="r">'+pr2+'</td></tr>';});
+ el.innerHTML=h+'</table><p class="sm">Waiting pays off in total dollars only if you live past the break even age. Undiscounted, before taxes, with no cost of living adjustments or spousal benefits. The chance uses your table, hazard ratio, and improvement setting, measured from your current age.</p>';}
+
+function applyTab(){TABS.forEach(function(t){var on=t===S.tab;$('p-'+t).hidden=!on;$('t-'+t).setAttribute('aria-selected',String(on));$('t-'+t).tabIndex=on?0:-1;});}
+var lastEst=null;
+function r2(v){return Math.round(v*100)/100;}
+function estOf(w){return estimate(S.est[w],w==='you'?S.sex:S.pSex,ageOf(w==='you'?S.birth:S.pBirth));}
+function syncEst(){var a=estOf('you'),b=estOf('p'),ka=a?r2(a.hr):null,kb=b?r2(b.hr):null;
+ if(lastEst===null){lastEst={you:ka,p:kb};return;}
+ if(ka!==lastEst.you){lastEst.you=ka;if(ka!==null)S.hr=ka;}
+ if(kb!==lastEst.p){lastEst.p=kb;if(kb!==null)S.pHr=kb;}}
+function renderAll(){S.pSex=S.sex==='m'?'f':'m';syncEst();$('sex').value=S.sex;$('psex-t').textContent={m:'Male',f:'Female'}[S.pSex];
+ $('notice').hidden=S.ack;applyTab();renderSurvival();renderTogether();renderFactors();renderEstOut();renderFx();renderHorizon();renderClaim();}
+function change(){save();renderAll();}
+
+document.addEventListener('click',function(e){var t=e.target.closest?e.target.closest('[data-tab],[data-r],[data-ef],[data-apply],#ack'):null;if(!t)return;
+ if(t.id==='ack'){S.ack=true;change();return;}
+ if(t.hasAttribute('data-tab')){S.tab=t.getAttribute('data-tab');save();applyTab();window.scrollTo(0,0);return;}
+ if(t.hasAttribute('data-r')){S.r=+t.getAttribute('data-r');change();return;}
+ if(t.hasAttribute('data-ef')){S.estFor=t.getAttribute('data-ef')==='p'?'p':'you';save();buildEstForm();renderEstOut();return;}
+ if(t.hasAttribute('data-apply')){var rr=estOf(S.estFor);if(rr){var v2=r2(rr.hr);if(S.estFor==='you')S.hr=v2;else S.pHr=v2;change();}return;}});
+$('sex').addEventListener('change',function(e){S.sex=e.target.value;change();});
+$('hr').addEventListener('input',function(e){S.hr=num(e.target.value,0.3,3,1);save();$('hrv').textContent=S.hr.toFixed(2);renderEstOut();renderSurvival();renderTogether();renderFx();renderHorizon();renderClaim();});
+$('phr').addEventListener('input',function(e){S.pHr=num(e.target.value,0.3,3,1);save();$('phrv').textContent=S.pHr.toFixed(2);renderEstOut();renderTogether();});
+['input','change'].forEach(function(ev){$('est-form').addEventListener(ev,function(e){var k=e.target&&e.target.getAttribute&&e.target.getAttribute('data-e');if(!k)return;S.est[S.estFor]=sanEst((function(o,kk,vv){var c={};for(var x in o)c[x]=o[x];c[kk]=vv;return c;})(S.est[S.estFor],k,e.target.value));change();});});
+$('ben').addEventListener('change',function(e){S.benefit=num(e.target.value,0,20000,2000);save();renderClaim();});
+function initDob(pre,key){
+ var m=$(pre+'-m'),d=$(pre+'-d'),y=$(pre+'-y'),e=$(pre+'-e'),dt=S[key].split('-');
+ m.value=String(+dt[1]);d.value=String(+dt[2]);y.value=dt[0];
+ function read(){
+  if(!m.value||!d.value||y.value.length<4){e.textContent='';return;}
+  var yy=+y.value,mm=+m.value,dd=+d.value,x=new Date(yy,mm-1,dd);
+  var ok=yy>=1900&&x.getFullYear()===yy&&x.getMonth()===mm-1&&x.getDate()===dd&&x<=new Date();
+  if(!ok){e.textContent='Enter a real date in the past.';return;}
+  e.textContent='';var v=yy+'-'+pad(mm)+'-'+pad(dd);
+  if(v!==S[key]){S[key]=v;save();renderAll();}
+ }
+ [m,d,y].forEach(function(el){el.addEventListener('change',read);el.addEventListener('input',read);});
+}
+initDob('birth','birth');initDob('pbirth','pBirth');
+selfCheck();
+buildEstForm();
+renderAll();
+renderChk();
+$('copy-sum').addEventListener('click',copySummary);
+window.PocketActuary={estimate:estimate,EST:EST,makeCurve:makeCurve,TABLES:TABLES,lifeTable:lifeTable,remaining:remaining,tAt:tAt,state:function(){return S;}};
+})();
+</script>
+</body>
+</html>
